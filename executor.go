@@ -743,6 +743,15 @@ func completeAbstractValue(eCtx *executionContext, returnType Abstract, fieldAST
 
 	var runtimeType *Object
 
+	// dereference if it is a pointer
+	if result != nil {
+		rvalue := reflect.ValueOf(result)
+		rvalue = reflect.Indirect(rvalue)
+		if rvalue.IsValid() {
+			result = rvalue.Interface()
+		}
+	}
+
 	resolveTypeParams := ResolveTypeParams{
 		Value:   result,
 		Info:    info,
