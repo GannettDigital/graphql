@@ -6,17 +6,19 @@ go:
   - 1.10.x
   - 1.11.x
   - 1.12.x
-  - tip
-
-matrix:
-  allow_failures:
-    - go: tip
-  fast_finish: true
 
 before_install:
-  - go get github.com/axw/gocov/gocov
   - go get github.com/mattn/goveralls
 
+sudo: false
+
+env:
+- GO111MODULE="on"
+
 script:
-  - $HOME/gopath/bin/goveralls -race -service=travis-ci
-  - go vet ./...
+- go test -v -race -parallel 4 -coverprofile=coverage.txt -covermode=atomic ./...
+
+after_success:
+- goveralls -coverprofile=coverage.txt -service=travis-ci
+
+
