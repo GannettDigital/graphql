@@ -93,7 +93,6 @@ func selectionSetCost(set *ast.SelectionSet, parent fieldDefiner, exeContext *ex
 					if inlineFragmentCost > maxInlineFragmentCost {
 						maxInlineFragmentCost = inlineFragmentCost
 					}
-					// TODO figure out if helps us a bit
 					break
 				}
 			}
@@ -117,6 +116,5 @@ func selectionSetCost(set *ast.SelectionSet, parent fieldDefiner, exeContext *ex
 			cost += selectionSetCost(fragment.GetSelectionSet(), fragmentObject, exeContext)
 		}
 	}
-	cost += maxInlineFragmentCost
-	return cost
+	return cost + maxInlineFragmentCost
 }
