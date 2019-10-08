@@ -461,7 +461,7 @@ func TestQueryComplexity(t *testing.T) {
 							}
 						}
 					}`,
-			want: 157,
+			want: 114,
 		},
 	}
 	for _, test := range tests {
