@@ -1,6 +1,8 @@
 package graphql
 
-import "github.com/GannettDigital/graphql/language/ast"
+import (
+	"github.com/GannettDigital/graphql/language/ast"
+)
 
 type fieldDefiner interface {
 	Fields() FieldDefinitionMap
@@ -39,7 +41,6 @@ func QueryComplexity(p ExecuteParams) (int, error) {
 // astFieldCost will recursively determine the cost of a field including its children.
 func astFieldCost(field *ast.Field, fieldDef *FieldDefinition, exeContext *executionContext) int {
 	cost := fieldDef.Cost
-
 	set := field.GetSelectionSet()
 	if set == nil {
 		return cost
@@ -69,7 +70,7 @@ func selectionSetCost(set *ast.SelectionSet, parent fieldDefiner, exeContext *ex
 		return 0
 	}
 	var cost int
-
+	maxInlineFragmentCost := 0
 	for _, iSelection := range set.Selections {
 		switch selection := iSelection.(type) {
 		case *ast.Field:
@@ -87,7 +88,13 @@ func selectionSetCost(set *ast.SelectionSet, parent fieldDefiner, exeContext *ex
 			}
 			for _, object := range exeContext.Schema.implementations[parentInterface.Name()] {
 				if object.Name() == selectionType.Name.Value {
-					cost += selectionSetCost(selection.SelectionSet, object, exeContext)
+					// calculate here
+					inlineFragmentCost := selectionSetCost(selection.SelectionSet, object, exeContext)
+					if inlineFragmentCost > maxInlineFragmentCost {
+						maxInlineFragmentCost = inlineFragmentCost
+					}
+					// TODO figure out if helps us a bit
+					break
 				}
 			}
 		case *ast.FragmentSpread:
@@ -110,6 +117,6 @@ func selectionSetCost(set *ast.SelectionSet, parent fieldDefiner, exeContext *ex
 			cost += selectionSetCost(fragment.GetSelectionSet(), fragmentObject, exeContext)
 		}
 	}
-
+	cost += maxInlineFragmentCost
 	return cost
 }

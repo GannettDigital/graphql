@@ -174,7 +174,7 @@ func TestQueryComplexity(t *testing.T) {
 		{
 			description: "Medium Complexity Query",
 			query: `{
- 						example {
+						example {
 							a,
 							b,
 							deep {
@@ -320,17 +320,17 @@ func TestQueryComplexity(t *testing.T) {
 									a
 									b
 									c
-                                }
+		                        }
 								... on DataType {
 									b
 									e
 									f
 									pic(size: 1)
-                                }
+		                        }
 							}
 						}
 					}`,
-			want: 68,
+			want: 65,
 		},
 		{
 			description: "Query with Interface and multiple inline fragment in a fragment",
@@ -339,7 +339,7 @@ func TestQueryComplexity(t *testing.T) {
 			            ... interfaceFrag
 			          }
 			        }
-                    fragment interfaceFrag on DataType {
+		            fragment interfaceFrag on DataType {
 						a,
 						b,
 						iface {
@@ -347,16 +347,16 @@ func TestQueryComplexity(t *testing.T) {
 								a
 								b
 								c
-                            }
+		                    }
 							... on DataType {
 								b
 								e
 								f
 								pic(size: 1)
-                            }
+		                    }
 						}
 					}`,
-			want: 68,
+			want: 65,
 		},
 		{
 			description: "Medium Complexity Query as fragment",
@@ -412,12 +412,64 @@ func TestQueryComplexity(t *testing.T) {
 				    }`,
 			want: 172,
 		},
+		{
+			description: "Query with type fragments within type fragments",
+			query: `{
+						example {
+							a,
+							b,
+							iface {
+								... on DeepDataType {
+									a
+									b
+									c
+									deeper {
+										a
+										b
+									}
+								}
+								... on DataType {
+									b
+									e
+									f
+									pic(size: 1)
+                                }
+							}
+						}
+					}`,
+			want: 157,
+		},
+		{
+			description: "Query with type fragments within type fragments",
+			query: `{
+						example {
+							iface {
+								... on DataType {
+									b
+									e
+									f
+									pic(size: 1)
+									iface {
+										... on DataType {
+											a
+										}
+										... on DeepDataType {
+											b
+										}
+									}
+								}
+							}
+						}
+					}`,
+			want: 157,
+		},
 	}
 	for _, test := range tests {
 		s := source.NewSource(&source.Source{
 			Body: []byte(test.query),
 			Name: "GraphQL request",
 		})
+
 		astDoc, err := parser.Parse(parser.ParseParams{Source: s})
 		if err != nil {
 			t.Fatalf("Test %q - Parse failed: %v", test.description, err)
