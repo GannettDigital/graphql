@@ -2,6 +2,7 @@ package graphql
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/GannettDigital/graphql/language/parser"
@@ -159,6 +160,7 @@ func TestQueryComplexity(t *testing.T) {
 		description string
 		query       string
 		want        int
+		wantMap     map[string]int
 	}{
 		// Note a test with an unused fragment isn't needed as that fails and a invalid query
 		{
@@ -170,6 +172,10 @@ func TestQueryComplexity(t *testing.T) {
 					  }
 					}`,
 			want: 2,
+			wantMap: map[string]int{
+				"example.a": 1,
+				"example.b": 1,
+			},
 		},
 		{
 			description: "Medium Complexity Query",
@@ -185,6 +191,14 @@ func TestQueryComplexity(t *testing.T) {
 						}
 					}`,
 			want: 30,
+			wantMap: map[string]int{
+				"example.a":      1,
+				"example.b":      1,
+				"example.deep":   25,
+				"example.deep.a": 1,
+				"example.deep.b": 1,
+				"example.deep.c": 1,
+			},
 		},
 		{
 			description: "Medium Complexity with inline fragment",
@@ -205,6 +219,16 @@ func TestQueryComplexity(t *testing.T) {
 						}
 					}`,
 			want: 56,
+			wantMap: map[string]int{
+				"example.a":         1,
+				"example.b":         1,
+				"example.deep":      25,
+				"example.deep.a":    1,
+				"example.deep.b":    1,
+				"example.deep.c":    1,
+				"example.promise":   25,
+				"example.promise.a": 1,
+			},
 		},
 		{
 			description: "Complex Query",
@@ -238,6 +262,24 @@ func TestQueryComplexity(t *testing.T) {
 						e
 					}`,
 			want: 172,
+			wantMap: map[string]int{
+				"example.a":             1,
+				"example.b":             1,
+				"example.d":             1,
+				"example.deep":          25,
+				"example.deep.a":        1,
+				"example.deep.b":        1,
+				"example.deep.c":        1,
+				"example.deep.deeper":   100,
+				"example.deep.deeper.a": 1,
+				"example.deep.deeper.b": 1,
+				"example.e":             1,
+				"example.f":             1,
+				"example.pic":           10,
+				"example.promise":       25,
+				"example.promise.a":     1,
+				"example.x=c":           1,
+			},
 		},
 		{
 			description: "Query with Interface",
@@ -251,6 +293,12 @@ func TestQueryComplexity(t *testing.T) {
 						}
 					}`,
 			want: 53,
+			wantMap: map[string]int{
+				"example.a":       1,
+				"example.b":       1,
+				"example.iface":   50,
+				"example.iface.b": 1,
+			},
 		},
 		{
 			description: "Query with Interface and inline fragment",
@@ -268,6 +316,14 @@ func TestQueryComplexity(t *testing.T) {
 						}
 					}`,
 			want: 55,
+			wantMap: map[string]int{
+				"example.a":       1,
+				"example.b":       1,
+				"example.iface":   50,
+				"example.iface.a": 1,
+				"example.iface.b": 1,
+				"example.iface.c": 1,
+			},
 		},
 		{
 			description: "Query with Interface and fragment on the interface",
@@ -288,6 +344,14 @@ func TestQueryComplexity(t *testing.T) {
 			            }
 					}`,
 			want: 55,
+			wantMap: map[string]int{
+				"example.a":       1,
+				"example.b":       1,
+				"example.iface":   50,
+				"example.iface.a": 1,
+				"example.iface.b": 1,
+				"example.iface.c": 1,
+			},
 		},
 		{
 			description: "Query with Interface in fragment with inline fragment",
@@ -308,6 +372,14 @@ func TestQueryComplexity(t *testing.T) {
 						}
 					}`,
 			want: 55,
+			wantMap: map[string]int{
+				"example.a":       1,
+				"example.b":       1,
+				"example.iface":   50,
+				"example.iface.a": 1,
+				"example.iface.b": 1,
+				"example.iface.c": 1,
+			},
 		},
 		{
 			description: "Query with Interface and multiple inline fragment",
@@ -331,6 +403,15 @@ func TestQueryComplexity(t *testing.T) {
 						}
 					}`,
 			want: 65,
+			wantMap: map[string]int{
+				"example.a":         1,
+				"example.b":         1,
+				"example.iface":     50,
+				"example.iface.b":   1,
+				"example.iface.e":   1,
+				"example.iface.f":   1,
+				"example.iface.pic": 10,
+			},
 		},
 		{
 			description: "Query with Interface and multiple inline fragment in a fragment",
@@ -357,6 +438,15 @@ func TestQueryComplexity(t *testing.T) {
 						}
 					}`,
 			want: 65,
+			wantMap: map[string]int{
+				"example.a":         1,
+				"example.b":         1,
+				"example.iface":     50,
+				"example.iface.b":   1,
+				"example.iface.e":   1,
+				"example.iface.f":   1,
+				"example.iface.pic": 10,
+			},
 		},
 		{
 			description: "Medium Complexity Query as fragment",
@@ -375,6 +465,14 @@ func TestQueryComplexity(t *testing.T) {
 						}
 					}`,
 			want: 30,
+			wantMap: map[string]int{
+				"example.a":      1,
+				"example.b":      1,
+				"example.deep":   25,
+				"example.deep.a": 1,
+				"example.deep.b": 1,
+				"example.deep.c": 1,
+			},
 		},
 		{
 			description: "Complex Query as fragment",
@@ -411,6 +509,24 @@ func TestQueryComplexity(t *testing.T) {
 					  e
 				    }`,
 			want: 172,
+			wantMap: map[string]int{
+				"example.a":             1,
+				"example.b":             1,
+				"example.d":             1,
+				"example.deep":          25,
+				"example.deep.a":        1,
+				"example.deep.b":        1,
+				"example.deep.c":        1,
+				"example.deep.deeper":   100,
+				"example.deep.deeper.a": 1,
+				"example.deep.deeper.b": 1,
+				"example.e":             1,
+				"example.f":             1,
+				"example.pic":           10,
+				"example.promise":       25,
+				"example.promise.a":     1,
+				"example.x=c":           1,
+			},
 		},
 		{
 			description: "Query with type fragments within type fragments",
@@ -438,9 +554,20 @@ func TestQueryComplexity(t *testing.T) {
 						}
 					}`,
 			want: 157,
+			wantMap: map[string]int{
+				"example.a":              1,
+				"example.b":              1,
+				"example.iface":          50,
+				"example.iface.a":        1,
+				"example.iface.b":        1,
+				"example.iface.c":        1,
+				"example.iface.deeper":   100,
+				"example.iface.deeper.a": 1,
+				"example.iface.deeper.b": 1,
+			},
 		},
 		{
-			description: "Query with type fragments within type fragments",
+			description: "Query with type fragments within type fragments another",
 			query: `{
 						example {
 							iface {
@@ -462,6 +589,15 @@ func TestQueryComplexity(t *testing.T) {
 						}
 					}`,
 			want: 114,
+			wantMap: map[string]int{
+				"example.iface":         50,
+				"example.iface.b":       1,
+				"example.iface.e":       1,
+				"example.iface.f":       1,
+				"example.iface.iface":   50,
+				"example.iface.iface.a": 1,
+				"example.iface.pic":     10,
+			},
 		},
 	}
 	for _, test := range tests {
@@ -486,12 +622,22 @@ func TestQueryComplexity(t *testing.T) {
 			Root:   data,
 			AST:    astDoc,
 		}
-		got, err := QueryComplexity(ep)
+		got, gotMap, err := QueryComplexity(ep)
 		if err != nil {
 			t.Errorf("Test %q - failed running query complexity: %v", test.description, err)
 		}
 		if got != test.want {
 			t.Errorf("Test %q - got %d, want %d", test.description, got, test.want)
+		}
+		mapTotal := 0
+		for _, mapCost := range gotMap {
+			mapTotal += mapCost
+		}
+		if got != mapTotal {
+			t.Errorf("Test %q - got %d detail sum, want %d", test.description, got, mapTotal)
+		}
+		if !reflect.DeepEqual(gotMap, test.wantMap) {
+			t.Errorf("Test %q\nwant: %#v\ngot : %#v", test.description, test.wantMap, gotMap)
 		}
 	}
 }

@@ -80,8 +80,9 @@ func Do(p Params) *Result {
 	}
 
 	var cost int
+	var costMap map[string]int
 	if p.MaxCost > 0 {
-		cost, err = QueryComplexity(ep)
+		cost, costMap, err = QueryComplexity(ep)
 		if err != nil {
 			return &Result{Errors: []gqlerrors.FormattedError{gqlerrors.FormatError(err)}}
 		}
@@ -90,12 +91,15 @@ func Do(p Params) *Result {
 				Errors: []gqlerrors.FormattedError{
 					gqlerrors.NewFormattedError(fmt.Sprintf("maximum complexity cost %d exceeded, query cost %d", p.MaxCost, cost)),
 				},
+				QueryComplexity:        cost,
+				QueryComplexityDetails: costMap,
 			}
 		}
 	}
 
 	result := Execute(ep)
 	result.QueryComplexity = cost
+	result.QueryComplexityDetails = costMap
 
 	return result
 }
