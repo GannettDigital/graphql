@@ -2,7 +2,6 @@ package graphql
 
 import (
 	"fmt"
-	"math"
 	"strconv"
 	"time"
 
@@ -15,6 +14,7 @@ import (
 // n.b. JavaScript's integers are safe between -(2^53 - 1) and 2^53 - 1 because
 // they are internally represented as IEEE 754 doubles.
 func coerceInt(value interface{}) interface{} {
+	// TODO this int32 limitation was removed to allow data in the system to properly work
 	switch value := value.(type) {
 	case bool:
 		if value == true {
@@ -22,9 +22,6 @@ func coerceInt(value interface{}) interface{} {
 		}
 		return 0
 	case int:
-		if value < int(math.MinInt32) || value > int(math.MaxInt32) {
-			return nil
-		}
 		return value
 	case *int:
 		return coerceInt(*value)
@@ -41,16 +38,10 @@ func coerceInt(value interface{}) interface{} {
 	case *int32:
 		return int(*value)
 	case int64:
-		if value < int64(math.MinInt32) || value > int64(math.MaxInt32) {
-			return nil
-		}
 		return int(value)
 	case *int64:
 		return coerceInt(*value)
 	case uint:
-		if value > math.MaxInt32 {
-			return nil
-		}
 		return int(value)
 	case *uint:
 		return coerceInt(*value)
@@ -63,30 +54,18 @@ func coerceInt(value interface{}) interface{} {
 	case *uint16:
 		return int(*value)
 	case uint32:
-		if value > uint32(math.MaxInt32) {
-			return nil
-		}
 		return int(value)
 	case *uint32:
 		return coerceInt(*value)
 	case uint64:
-		if value > uint64(math.MaxInt32) {
-			return nil
-		}
 		return int(value)
 	case *uint64:
 		return coerceInt(*value)
 	case float32:
-		if value < float32(math.MinInt32) || value > float32(math.MaxInt32) {
-			return nil
-		}
 		return int(value)
 	case *float32:
 		return coerceInt(*value)
 	case float64:
-		if value < float64(math.MinInt32) || value > float64(math.MaxInt32) {
-			return nil
-		}
 		return int(value)
 	case *float64:
 		return coerceInt(*value)
