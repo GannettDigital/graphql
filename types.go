@@ -9,6 +9,7 @@ import (
 type Result struct {
 	Data                   interface{}                `json:"data"`
 	Errors                 []gqlerrors.FormattedError `json:"errors,omitempty"`
+	Consumer               string                     `json:"consumer,omitempty"`
 	QueryComplexity        int                        `json:"queryComplexity,omitempty"`
 	QueryComplexityDetails map[string]int             `json:"queryComplexityDetails,omitempty"`
 }
