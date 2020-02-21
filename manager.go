@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	requestQueueBuffer = 50 // this also defines the number of permanent workers which is double this number
+	requestQueueBuffer = 10 // this also defines the number of permanent workers which is double this number
 )
 
 // completeRequest contains the information needed to complete a field.

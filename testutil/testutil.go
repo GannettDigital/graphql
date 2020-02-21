@@ -162,6 +162,7 @@ func init() {
 					}
 					return nil, nil
 				},
+				ResolveSerial: true,
 			},
 			"name": &graphql.Field{
 				Type:        graphql.String,
@@ -172,6 +173,7 @@ func init() {
 					}
 					return nil, nil
 				},
+				ResolveSerial: true,
 			},
 			"friends": &graphql.Field{
 				Type:        graphql.NewList(characterInterface),
@@ -192,6 +194,7 @@ func init() {
 					}
 					return nil, nil
 				},
+				ResolveSerial: true,
 			},
 			"homePlanet": &graphql.Field{
 				Type:        graphql.String,
@@ -202,6 +205,7 @@ func init() {
 					}
 					return nil, nil
 				},
+				ResolveSerial: true,
 			},
 		},
 		Interfaces: []*graphql.Interface{
@@ -221,6 +225,7 @@ func init() {
 					}
 					return nil, nil
 				},
+				ResolveSerial: true,
 			},
 			"name": &graphql.Field{
 				Type:        graphql.String,
@@ -231,6 +236,7 @@ func init() {
 					}
 					return nil, nil
 				},
+				ResolveSerial: true,
 			},
 			"friends": &graphql.Field{
 				Type:        graphql.NewList(characterInterface),
@@ -258,6 +264,7 @@ func init() {
 					}
 					return nil, nil
 				},
+				ResolveSerial: true,
 			},
 			"primaryFunction": &graphql.Field{
 				Type:        graphql.String,
@@ -268,6 +275,7 @@ func init() {
 					}
 					return nil, nil
 				},
+				ResolveSerial: true,
 			},
 		},
 		Interfaces: []*graphql.Interface{

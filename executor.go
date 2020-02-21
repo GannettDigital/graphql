@@ -33,7 +33,7 @@ func Execute(p ExecuteParams) (result *Result) {
 		ctx = context.Background()
 	}
 	if p.manager == nil {
-		p.manager = manager
+		p.manager = newResolveManager()
 	}
 
 	resultChannel := make(chan *Result)
@@ -323,6 +323,7 @@ func resolveSerially(fn FieldResolveFn, params ResolveParams) (result interface{
 }
 
 // Implements the "Evaluating selection sets" section of the spec for "read" mode.
+// This function will serially run fields which are the ResolveSerial attribute and run all others in parallel.
 func executeFields(p executeFieldsParams) *Result {
 	if p.Source == nil {
 		p.Source = map[string]interface{}{}
@@ -336,15 +337,36 @@ func executeFields(p executeFieldsParams) *Result {
 	responses := make(chan resolverResponse, len(p.Fields))
 	defer close(responses)
 
+	completed := make(map[string]resolverResponse)
+	infoParams := make(map[string]ResolveInfo)
+
 	for responseName, fieldASTs := range p.Fields {
 		fn, params := resolveField(p.ExecutionContext, p.ParentType, p.Source, fieldASTs)
 		if fn == nil {
 			continue
 		}
-		requests[responseName] = params
-		p.ExecutionContext.manager.resolveRequest(responseName, responses, fn, params)
+
+		// Check to see if this field should resolve serially
+		fieldAST := fieldASTs[0]
+		fieldName := ""
+		if fieldAST.Name != nil {
+			fieldName = fieldAST.Name.Value
+		}
+		fieldDef := getFieldDef(p.ExecutionContext.Schema, p.ParentType, fieldName)
+		var serial bool
+		if fieldDef != nil && fieldDef.ResolveSerial {
+			serial = true
+		}
+
+		infoParams[responseName] = params.Info
+		if serial {
+			result, err := resolveSerially(fn, params)
+			completed[responseName] = resolverResponse{name: responseName, err: err, result: result}
+		} else {
+			requests[responseName] = params
+			p.ExecutionContext.manager.resolveRequest(responseName, responses, fn, params)
+		}
 	}
-	completed := make(map[string]resolverResponse)
 	for range requests {
 		resp := <-responses
 		completed[resp.name] = resp
@@ -358,8 +380,8 @@ func executeFields(p executeFieldsParams) *Result {
 			}
 		}
 
-		params := requests[responseName]
-		finalResults[responseName] = completeValueCatchingError(p.ExecutionContext, params.Info.ReturnType, params.Info.FieldASTs, params.Info, resp.result)
+		info := infoParams[responseName]
+		finalResults[responseName] = completeValueCatchingError(p.ExecutionContext, info.ReturnType, info.FieldASTs, info, resp.result)
 	}
 	return &Result{
 		Data:   finalResults,
@@ -784,9 +806,7 @@ func completeObjectValue(eCtx *executionContext, returnType *Object, fieldASTs [
 		Source:           result,
 		Fields:           subFieldASTs,
 	}
-	// Note I could run `results := executeFields(executeFieldsParams)` but this explodes the number of needed go
-	// routines with little benefit
-	results := executeFieldsSerially(executeFieldsParams)
+	results := executeFields(executeFieldsParams)
 
 	return results.Data
 
