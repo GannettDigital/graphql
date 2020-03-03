@@ -33,7 +33,7 @@ func Execute(p ExecuteParams) (result *Result) {
 		ctx = context.Background()
 	}
 	if p.manager == nil {
-		p.manager = newResolveManager()
+		p.manager = manager
 	}
 
 	resultChannel := make(chan *Result)
@@ -838,27 +838,10 @@ func completeListValue(eCtx *executionContext, returnType *List, fieldASTs []*as
 	}
 
 	itemType := returnType.OfType
-	responses := make(chan completeResponse, resultVal.Len())
-	defer close(responses)
-
-	for i := 0; i < resultVal.Len(); i++ {
-		req := completeRequest{
-			index:    i,
-			response: responses,
-
-			eCtx:       eCtx,
-			returnType: itemType,
-			fieldASTs:  fieldASTs,
-			info:       info,
-			value:      resultVal.Index(i).Interface(),
-		}
-		eCtx.manager.completeRequest(req)
-	}
 
 	completedResults := make([]interface{}, resultVal.Len())
 	for i := 0; i < resultVal.Len(); i++ {
-		resp := <-responses
-		completedResults[resp.index] = resp.result
+		completedResults[i] = completeValueCatchingError(eCtx, itemType, fieldASTs, info, resultVal.Index(i).Interface())
 	}
 	return completedResults
 }

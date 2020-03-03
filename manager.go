@@ -4,33 +4,11 @@ import (
 	"fmt"
 
 	"github.com/GannettDigital/graphql/gqlerrors"
-	"github.com/GannettDigital/graphql/language/ast"
 )
 
 const (
 	requestQueueBuffer = 10 // this also defines the number of permanent workers which is double this number
 )
-
-// completeRequest contains the information needed to complete a field.
-// A completeRequest is passed to a resolveManager worker which processes the request.
-// This is only used when completing multiple items concurrently such as needed for a list
-type completeRequest struct {
-	index    int
-	response chan<- completeResponse
-
-	eCtx       *executionContext
-	returnType Type
-	fieldASTs  []*ast.Field
-	info       ResolveInfo
-	value      interface{}
-}
-
-// completeResponse is the type containing the completion response which is sent over a channel as workers finish
-// processing.
-type completeResponse struct {
-	index  int
-	result interface{}
-}
 
 // resolveRequest contains the information needed to resolve a field.
 // A resolveRequest is passed to a resolveManager worker which processes the request.
@@ -60,14 +38,12 @@ type resolverResponse struct {
 // A small set of workers are long lived to allow some processing to happen at all times and enable a buffered channel
 // Most other workers are not long lived but will only exit when the request channels are empty.
 type resolveManager struct {
-	completeRequests chan completeRequest
-	resolveRequests  chan resolveRequest
+	resolveRequests chan resolveRequest
 }
 
 func newResolveManager() *resolveManager {
 	manager := &resolveManager{
-		completeRequests: make(chan completeRequest, requestQueueBuffer),
-		resolveRequests:  make(chan resolveRequest, requestQueueBuffer),
+		resolveRequests: make(chan resolveRequest, requestQueueBuffer),
 	}
 
 	for i := 0; i < 2*requestQueueBuffer; i++ {
@@ -76,22 +52,9 @@ func newResolveManager() *resolveManager {
 	return manager
 }
 
-func (manager *resolveManager) completeRequest(req completeRequest) {
-	select {
-	case manager.completeRequests <- req:
-		return
-	default:
-		go manager.newWorker()
-		manager.completeRequests <- req
-	}
-}
-
 func (manager *resolveManager) infiniteWorker() {
 	for {
 		select {
-		case req := <-manager.completeRequests:
-			result := completeValueCatchingError(req.eCtx, req.returnType, req.fieldASTs, req.info, req.value)
-			req.response <- completeResponse{index: req.index, result: result}
 		case req := <-manager.resolveRequests:
 			manager.resolve(req)
 		}
@@ -101,9 +64,6 @@ func (manager *resolveManager) infiniteWorker() {
 func (manager *resolveManager) newWorker() {
 	for {
 		select {
-		case req := <-manager.completeRequests:
-			result := completeValueCatchingError(req.eCtx, req.returnType, req.fieldASTs, req.info, req.value)
-			req.response <- completeResponse{index: req.index, result: result}
 		case req := <-manager.resolveRequests:
 			manager.resolve(req)
 		default:
