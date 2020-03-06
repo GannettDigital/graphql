@@ -219,12 +219,15 @@ func init() {
 					}
 					return nil, fmt.Errorf("Unknown kind of type: %v", p.Source)
 				},
+				ResolveSerial: true,
 			},
 			"name": &Field{
-				Type: String,
+				Type:          String,
+				ResolveSerial: true,
 			},
 			"description": &Field{
-				Type: String,
+				Type:          String,
+				ResolveSerial: true,
 			},
 			"fields":        &Field{},
 			"interfaces":    &Field{},
@@ -242,13 +245,16 @@ func init() {
 			"and optionally a default value.",
 		Fields: Fields{
 			"name": &Field{
-				Type: NewNonNull(String),
+				Type:          NewNonNull(String),
+				ResolveSerial: true,
 			},
 			"description": &Field{
-				Type: String,
+				Type:          String,
+				ResolveSerial: true,
 			},
 			"type": &Field{
-				Type: NewNonNull(TypeType),
+				Type:          NewNonNull(TypeType),
+				ResolveSerial: true,
 			},
 			"defaultValue": &Field{
 				Type: String,
@@ -274,6 +280,7 @@ func init() {
 					}
 					return nil, nil
 				},
+				ResolveSerial: true,
 			},
 		},
 	})
@@ -284,7 +291,8 @@ func init() {
 			"which has a name, potentially a list of arguments, and a return type.",
 		Fields: Fields{
 			"name": &Field{
-				Type: NewNonNull(String),
+				Type:          NewNonNull(String),
+				ResolveSerial: true,
 			},
 			"description": &Field{
 				Type: String,
@@ -301,6 +309,7 @@ func init() {
 					}
 					return nil, nil
 				},
+				ResolveSerial: true,
 			},
 			"args": &Field{
 				Type: NewNonNull(NewList(NewNonNull(InputValueType))),
@@ -310,9 +319,11 @@ func init() {
 					}
 					return []interface{}{}, nil
 				},
+				ResolveSerial: true,
 			},
 			"type": &Field{
-				Type: NewNonNull(TypeType),
+				Type:          NewNonNull(TypeType),
+				ResolveSerial: true,
 			},
 			"isDeprecated": &Field{
 				Type: NewNonNull(Boolean),
@@ -322,9 +333,11 @@ func init() {
 					}
 					return false, nil
 				},
+				ResolveSerial: true,
 			},
 			"deprecationReason": &Field{
-				Type: String,
+				Type:          String,
+				ResolveSerial: true,
 			},
 		},
 	})
@@ -339,20 +352,24 @@ func init() {
 			"describing additional information to the executor.",
 		Fields: Fields{
 			"name": &Field{
-				Type: NewNonNull(String),
+				Type:          NewNonNull(String),
+				ResolveSerial: true,
 			},
 			"description": &Field{
-				Type: String,
+				Type:          String,
+				ResolveSerial: true,
 			},
 			"locations": &Field{
 				Type: NewNonNull(NewList(
 					NewNonNull(DirectiveLocationEnumType),
 				)),
+				ResolveSerial: true,
 			},
 			"args": &Field{
 				Type: NewNonNull(NewList(
 					NewNonNull(InputValueType),
 				)),
+				ResolveSerial: true,
 			},
 			// NOTE: the following three fields are deprecated and are no longer part
 			// of the GraphQL specification.
@@ -374,6 +391,7 @@ func init() {
 					}
 					return false, nil
 				},
+				ResolveSerial: true,
 			},
 			"onFragment": &Field{
 				DeprecationReason: "Use `locations`.",
@@ -393,6 +411,7 @@ func init() {
 					}
 					return false, nil
 				},
+				ResolveSerial: true,
 			},
 			"onField": &Field{
 				DeprecationReason: "Use `locations`.",
@@ -410,6 +429,7 @@ func init() {
 					}
 					return false, nil
 				},
+				ResolveSerial: true,
 			},
 		},
 	})
@@ -435,6 +455,7 @@ func init() {
 					}
 					return []Type{}, nil
 				},
+				ResolveSerial: true,
 			},
 			"queryType": &Field{
 				Description: "The type that query operations will be rooted at.",
@@ -445,6 +466,7 @@ func init() {
 					}
 					return nil, nil
 				},
+				ResolveSerial: true,
 			},
 			"mutationType": &Field{
 				Description: `If this server supports mutation, the type that ` +
@@ -458,6 +480,7 @@ func init() {
 					}
 					return nil, nil
 				},
+				ResolveSerial: true,
 			},
 			"subscriptionType": &Field{
 				Description: `If this server supports subscription, the type that ` +
@@ -471,6 +494,7 @@ func init() {
 					}
 					return nil, nil
 				},
+				ResolveSerial: true,
 			},
 			"directives": &Field{
 				Description: `A list of all directives supported by this server.`,
@@ -483,6 +507,7 @@ func init() {
 					}
 					return nil, nil
 				},
+				ResolveSerial: true,
 			},
 		},
 	})
@@ -494,10 +519,12 @@ func init() {
 			"returned in a JSON response as a string.",
 		Fields: Fields{
 			"name": &Field{
-				Type: NewNonNull(String),
+				Type:          NewNonNull(String),
+				ResolveSerial: true,
 			},
 			"description": &Field{
-				Type: String,
+				Type:          String,
+				ResolveSerial: true,
 			},
 			"isDeprecated": &Field{
 				Type: NewNonNull(Boolean),
@@ -507,9 +534,11 @@ func init() {
 					}
 					return false, nil
 				},
+				ResolveSerial: true,
 			},
 			"deprecationReason": &Field{
-				Type: String,
+				Type:          String,
+				ResolveSerial: true,
 			},
 		},
 	})
@@ -559,6 +588,7 @@ func init() {
 			}
 			return nil, nil
 		},
+		ResolveSerial: true,
 	})
 	TypeType.AddFieldConfig("interfaces", &Field{
 		Type: NewList(NewNonNull(TypeType)),
@@ -569,6 +599,7 @@ func init() {
 			}
 			return nil, nil
 		},
+		ResolveSerial: true,
 	})
 	TypeType.AddFieldConfig("possibleTypes", &Field{
 		Type: NewList(NewNonNull(TypeType)),
@@ -581,6 +612,7 @@ func init() {
 			}
 			return nil, nil
 		},
+		ResolveSerial: true,
 	})
 	TypeType.AddFieldConfig("enumValues", &Field{
 		Type: NewList(NewNonNull(EnumValueType)),
@@ -608,6 +640,7 @@ func init() {
 			}
 			return nil, nil
 		},
+		ResolveSerial: true,
 	})
 	TypeType.AddFieldConfig("inputFields", &Field{
 		Type: NewList(NewNonNull(InputValueType)),
@@ -622,9 +655,11 @@ func init() {
 			}
 			return nil, nil
 		},
+		ResolveSerial: true,
 	})
 	TypeType.AddFieldConfig("ofType", &Field{
-		Type: TypeType,
+		Type:          TypeType,
+		ResolveSerial: true,
 	})
 
 	// Note that these are FieldDefinition and not FieldConfig,
@@ -637,6 +672,7 @@ func init() {
 		Resolve: func(p ResolveParams) (interface{}, error) {
 			return p.Info.Schema, nil
 		},
+		ResolveSerial: true,
 	}
 	TypeMetaFieldDef = &FieldDefinition{
 		Name:        "__type",
@@ -655,6 +691,7 @@ func init() {
 			}
 			return p.Info.Schema.Type(name), nil
 		},
+		ResolveSerial: true,
 	}
 
 	TypeNameMetaFieldDef = &FieldDefinition{
@@ -665,6 +702,7 @@ func init() {
 		Resolve: func(p ResolveParams) (interface{}, error) {
 			return p.Info.ParentType.Name(), nil
 		},
+		ResolveSerial: true,
 	}
 
 }

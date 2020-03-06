@@ -50,16 +50,20 @@ var dataType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "DataType",
 	Fields: graphql.Fields{
 		"sync": &graphql.Field{
-			Type: graphql.String,
+			Type:          graphql.String,
+			ResolveSerial: true,
 		},
 		"nonNullSync": &graphql.Field{
-			Type: graphql.NewNonNull(graphql.String),
+			Type:          graphql.NewNonNull(graphql.String),
+			ResolveSerial: true,
 		},
 		"promise": &graphql.Field{
-			Type: graphql.String,
+			Type:          graphql.String,
+			ResolveSerial: true,
 		},
 		"nonNullPromise": &graphql.Field{
-			Type: graphql.NewNonNull(graphql.String),
+			Type:          graphql.NewNonNull(graphql.String),
+			ResolveSerial: true,
 		},
 	},
 })
@@ -1009,7 +1013,7 @@ func TestNonNull_NullsTheTopLevelIfSyncNonNullableFieldThrows(t *testing.T) {
       query Q { nonNullSync }
 	`
 	expected := &graphql.Result{
-		Data: map[string]interface{}{"nonNullSync": nil},
+		Data: nil,
 		Errors: []gqlerrors.FormattedError{
 			{
 				Message: nonNullSyncError,
@@ -1041,7 +1045,7 @@ func TestNonNull_NullsTheTopLevelIfSyncNonNullableFieldErrors(t *testing.T) {
       query Q { nonNullPromise }
 	`
 	expected := &graphql.Result{
-		Data: map[string]interface{}{"nonNullPromise": nil},
+		Data: nil,
 		Errors: []gqlerrors.FormattedError{
 			{
 				Message: nonNullPromiseError,

@@ -530,6 +530,7 @@ func defineFieldMap(ttype Named, fieldMap Fields) (FieldDefinitionMap, error) {
 			Description:       field.Description,
 			Type:              field.Type,
 			Resolve:           field.Resolve,
+			ResolveSerial:     field.ResolveSerial,
 			DeprecationReason: field.DeprecationReason,
 		}
 
@@ -602,6 +603,7 @@ type Field struct {
 	Type              Output              `json:"type"`
 	Args              FieldConfigArgument `json:"args"`
 	Resolve           FieldResolveFn      `json:"-"`
+	ResolveSerial     bool                `json:"-"` // If true this field will always be resolved serially
 	DeprecationReason string              `json:"deprecationReason"`
 	Description       string              `json:"description"`
 }
@@ -621,6 +623,7 @@ type FieldDefinition struct {
 	Description       string         `json:"description"`
 	Type              Output         `json:"type"`
 	Args              []*Argument    `json:"args"`
+	ResolveSerial     bool           `json:"-"` // If true this field will always be resolved serially
 	Resolve           FieldResolveFn `json:"-"`
 	DeprecationReason string         `json:"deprecationReason"`
 }
