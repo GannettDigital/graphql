@@ -839,9 +839,30 @@ func completeListValue(eCtx *executionContext, returnType *List, fieldASTs []*as
 
 	itemType := returnType.OfType
 
-	completedResults := make([]interface{}, resultVal.Len())
+	// TODO Ideally only run in parallel when one of the list item children has resolveSerial = false but this is hard
+	// to determine
+	responses := make(chan completeResponse, resultVal.Len())
+	defer close(responses)
+
 	for i := 0; i < resultVal.Len(); i++ {
-		completedResults[i] = completeValueCatchingError(eCtx, itemType, fieldASTs, info, resultVal.Index(i).Interface())
+		req := completeRequest{
+			index:    i,
+			response: responses,
+
+			eCtx:       eCtx,
+			returnType: itemType,
+			fieldASTs:  fieldASTs,
+			info:       info,
+			value:      resultVal.Index(i).Interface(),
+		}
+		eCtx.manager.completeRequest(req)
+	}
+
+	completedResults := make([]interface{}, resultVal.Len())
+
+	for i := 0; i < resultVal.Len(); i++ {
+		resp := <-responses
+		completedResults[resp.index] = resp.result
 	}
 	return completedResults
 }
