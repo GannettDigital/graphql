@@ -342,9 +342,9 @@ type Object struct {
 	IsTypeOf           IsTypeOfFn
 
 	typeConfig            ObjectConfig
-	initialisedFields     bool
+	initialisedFields     sync.Once
 	fields                FieldDefinitionMap
-	initialisedInterfaces bool
+	initialisedInterfaces sync.Once
 	interfaces            []*Interface
 	// Interim alternative to throwing an error during schema definition at run-time
 	err error
@@ -398,6 +398,14 @@ func NewObject(config ObjectConfig) *Object {
 	objectType.IsTypeOf = config.IsTypeOf
 	objectType.typeConfig = config
 
+	// Pre-calculating for later concurrency, unless thunking for circular references.
+	if _, thunked := objectType.typeConfig.Fields.(FieldsThunk); !thunked {
+		_ = objectType.Fields()
+	}
+	if _, thunked := objectType.typeConfig.Interfaces.(InterfacesThunk); !thunked {
+		_ = objectType.Interfaces()
+	}
+
 	return objectType
 }
 func (gt *Object) AddFieldConfig(fieldName string, fieldConfig *Field) {
@@ -407,7 +415,7 @@ func (gt *Object) AddFieldConfig(fieldName string, fieldConfig *Field) {
 	switch gt.typeConfig.Fields.(type) {
 	case Fields:
 		gt.typeConfig.Fields.(Fields)[fieldName] = fieldConfig
-		gt.initialisedFields = false
+		gt.initialisedFields = sync.Once{}
 	}
 }
 func (gt *Object) Name() string {
@@ -420,43 +428,36 @@ func (gt *Object) String() string {
 	return gt.PrivateName
 }
 func (gt *Object) Fields() FieldDefinitionMap {
-	if gt.initialisedFields {
-		return gt.fields
-	}
+	gt.initialisedFields.Do(func() {
+		var configureFields Fields
+		switch gt.typeConfig.Fields.(type) {
+		case Fields:
+			configureFields = gt.typeConfig.Fields.(Fields)
+		case FieldsThunk:
+			configureFields = gt.typeConfig.Fields.(FieldsThunk)()
+		}
 
-	var configureFields Fields
-	switch gt.typeConfig.Fields.(type) {
-	case Fields:
-		configureFields = gt.typeConfig.Fields.(Fields)
-	case FieldsThunk:
-		configureFields = gt.typeConfig.Fields.(FieldsThunk)()
-	}
-
-	gt.fields, gt.err = defineFieldMap(gt, configureFields)
-	gt.initialisedFields = true
+		gt.fields, gt.err = defineFieldMap(gt, configureFields)
+	})
 	return gt.fields
 }
 
 func (gt *Object) Interfaces() []*Interface {
-	if gt.initialisedInterfaces {
-		return gt.interfaces
-	}
+	gt.initialisedInterfaces.Do(func() {
+		var configInterfaces []*Interface
+		switch gt.typeConfig.Interfaces.(type) {
+		case InterfacesThunk:
+			configInterfaces = gt.typeConfig.Interfaces.(InterfacesThunk)()
+		case []*Interface:
+			configInterfaces = gt.typeConfig.Interfaces.([]*Interface)
+		case nil:
+		default:
+			gt.err = fmt.Errorf("Unknown Object.Interfaces type: %T", gt.typeConfig.Interfaces)
+			return
+		}
 
-	var configInterfaces []*Interface
-	switch gt.typeConfig.Interfaces.(type) {
-	case InterfacesThunk:
-		configInterfaces = gt.typeConfig.Interfaces.(InterfacesThunk)()
-	case []*Interface:
-		configInterfaces = gt.typeConfig.Interfaces.([]*Interface)
-	case nil:
-	default:
-		gt.err = fmt.Errorf("Unknown Object.Interfaces type: %T", gt.typeConfig.Interfaces)
-		gt.initialisedInterfaces = true
-		return nil
-	}
-
-	gt.interfaces, gt.err = defineInterfaces(gt, configInterfaces)
-	gt.initialisedInterfaces = true
+		gt.interfaces, gt.err = defineInterfaces(gt, configInterfaces)
+	})
 	return gt.interfaces
 }
 
@@ -679,7 +680,7 @@ type Interface struct {
 	ResolveType        ResolveTypeFn
 
 	typeConfig        InterfaceConfig
-	initialisedFields bool
+	initialisedFields sync.Once
 	fields            FieldDefinitionMap
 	err               error
 }
@@ -721,6 +722,11 @@ func NewInterface(config InterfaceConfig) *Interface {
 	it.ResolveType = config.ResolveType
 	it.typeConfig = config
 
+	// Pre-calculating for later concurrency.
+	if _, thunked := it.typeConfig.Fields.(FieldsThunk); !thunked {
+		_ = it.Fields()
+	}
+
 	return it
 }
 
@@ -731,7 +737,7 @@ func (it *Interface) AddFieldConfig(fieldName string, fieldConfig *Field) {
 	switch it.typeConfig.Fields.(type) {
 	case Fields:
 		it.typeConfig.Fields.(Fields)[fieldName] = fieldConfig
-		it.initialisedFields = false
+		it.initialisedFields = sync.Once{}
 	}
 }
 
@@ -744,20 +750,17 @@ func (it *Interface) Description() string {
 }
 
 func (it *Interface) Fields() (fields FieldDefinitionMap) {
-	if it.initialisedFields {
-		return it.fields
-	}
+	it.initialisedFields.Do(func() {
+		var configureFields Fields
+		switch it.typeConfig.Fields.(type) {
+		case Fields:
+			configureFields = it.typeConfig.Fields.(Fields)
+		case FieldsThunk:
+			configureFields = it.typeConfig.Fields.(FieldsThunk)()
+		}
 
-	var configureFields Fields
-	switch it.typeConfig.Fields.(type) {
-	case Fields:
-		configureFields = it.typeConfig.Fields.(Fields)
-	case FieldsThunk:
-		configureFields = it.typeConfig.Fields.(FieldsThunk)()
-	}
-
-	it.fields, it.err = defineFieldMap(it, configureFields)
-	it.initialisedFields = true
+		it.fields, it.err = defineFieldMap(it, configureFields)
+	})
 	return it.fields
 }
 

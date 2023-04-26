@@ -705,6 +705,19 @@ func init() {
 		ResolveSerial: true,
 	}
 
+	// Pre-calculate fields and interfaces to avoid races later.
+	_ = TypeType.Fields()
+	_ = TypeType.Interfaces()
+	_ = InputValueType.Fields()
+	_ = InputValueType.Interfaces()
+	_ = FieldType.Fields()
+	_ = FieldType.Interfaces()
+	_ = DirectiveType.Fields()
+	_ = DirectiveType.Interfaces()
+	_ = SchemaType.Fields()
+	_ = SchemaType.Interfaces()
+	_ = EnumValueType.Fields()
+	_ = EnumValueType.Interfaces()
 }
 
 // Produces a GraphQL Value AST given a Golang value.

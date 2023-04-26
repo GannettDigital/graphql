@@ -45,11 +45,9 @@ type Params struct {
 }
 
 func Do(p Params) *Result {
-	if manager == nil {
-		managerInit.Do(func() {
-			manager = newResolveManager()
-		})
-	}
+	managerInit.Do(func() {
+		manager = newResolveManager()
+	})
 
 	source := source.NewSource(&source.Source{
 		Body: []byte(p.RequestString),
