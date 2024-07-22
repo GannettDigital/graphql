@@ -327,3 +327,15 @@ var DateTime = NewScalar(ScalarConfig{
 		return nil
 	},
 })
+
+var Map = NewScalar(ScalarConfig{
+	Name:        "Map",
+	Description: "Map",
+	Serialize: func(value interface{}) interface{} {
+		return value
+	},
+	ParseValue: func(value interface{}) interface{} {
+		return value
+	},
+	ParseLiteral: func(valueAST ast.Value) interface{} { return valueAST.GetValue() },
+})
